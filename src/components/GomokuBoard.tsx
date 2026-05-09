@@ -9,8 +9,9 @@ interface GomokuBoardProps {
   onPlay: (move: Move) => void
 }
 
-const PADDING = 28
-const CELL = 36
+// 标准赛制仍为 15x15，这里放大的是物理显示尺寸。
+const PADDING = 36
+const CELL = 44
 const SIZE = PADDING * 2 + CELL * (BOARD_SIZE - 1)
 
 export function GomokuBoard({
@@ -108,7 +109,7 @@ export function GomokuBoard({
 }
 
 function drawStone(ctx: CanvasRenderingContext2D, x: number, y: number, stone: Stone) {
-  const radius = 14
+  const radius = 17
   const grad = ctx.createRadialGradient(x - 4, y - 4, 3, x, y, radius + 3)
   if (stone === 1) {
     grad.addColorStop(0, '#707070')
