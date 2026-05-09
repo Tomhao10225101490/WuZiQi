@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getBestMove } from './ai/minimax'
 import { GamePanel } from './components/GamePanel'
 import { GomokuBoard } from './components/GomokuBoard'
@@ -16,6 +16,9 @@ function App() {
   const [isDraw, setIsDraw] = useState(false)
   const [history, setHistory] = useState<Move[]>([])
   const [lastMove, setLastMove] = useState<Move | null>(null)
+  const [winningLine, setWinningLine] = useState<Move[] | null>(null)
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const [aiThinkingInfo, setAiThinkingInfo] = useState('')
 
   const aiStone: Player = humanStone === 1 ? 2 : 1
   const gameOver = winner !== 0 || isDraw
@@ -23,6 +26,8 @@ function App() {
   const boardDisabled = gameOver || thinking || currentPlayer !== humanStone
 
   const safeDepth = useMemo(() => Math.max(1, Math.min(3, difficulty)), [difficulty])
+  const aiMaxDepth = useMemo(() => [4, 6, 8][safeDepth - 1], [safeDepth])
+  const aiTimeBudget = useMemo(() => [1800, 3200, 5000][safeDepth - 1], [safeDepth])
 
   const resetGame = () => {
     setBoard(createEmptyBoard())
@@ -31,9 +36,28 @@ function App() {
     setIsDraw(false)
     setHistory([])
     setLastMove(null)
+    setWinningLine(null)
+    setAiThinkingInfo('')
   }
 
-  const applyMove = (move: Move, stone: Player) => {
+  const playTone = useCallback((freq: number, duration = 0.12) => {
+    if (!soundEnabled) return
+    const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.value = freq
+    osc.type = 'triangle'
+    gain.gain.value = 0.04
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + duration)
+    osc.onended = () => void ctx.close()
+  }, [soundEnabled])
+
+  const applyMove = useCallback((move: Move, stone: Player) => {
     setBoard((prev) => {
       const next = cloneBoard(prev)
       const ok = placeStone(next, move, stone)
@@ -44,12 +68,19 @@ function App() {
       setHistory((old) => [...old, move])
       setWinner(result.winner)
       setIsDraw(result.isDraw)
+      setWinningLine(result.winningLine)
+      playTone(stone === humanStone ? 600 : 450, 0.08)
+      if (result.winner === humanStone) {
+        playTone(840, 0.18)
+      } else if (result.winner !== 0) {
+        playTone(220, 0.2)
+      }
       if (!result.gameOver) {
         setCurrentPlayer(stone === 1 ? 2 : 1)
       }
       return next
     })
-  }
+  }, [humanStone, playTone])
 
   const handleHumanMove = (move: Move) => {
     if (boardDisabled || board[move.row][move.col] !== 0) return
@@ -73,6 +104,8 @@ function App() {
     })
     setWinner(0)
     setIsDraw(false)
+    setWinningLine(null)
+    setAiThinkingInfo('')
     setCurrentPlayer(humanStone)
   }
 
@@ -82,18 +115,30 @@ function App() {
     }
 
     const timer = window.setTimeout(() => {
-      const { move } = getBestMove(board, aiStone, safeDepth)
+      const { move, depthReached, nodes, timeSpentMs } = getBestMove(
+        board,
+        aiStone,
+        aiMaxDepth,
+        aiTimeBudget,
+      )
+      setAiThinkingInfo(`AI 深度${depthReached} · 节点${nodes} · ${timeSpentMs}ms`)
       if (move) {
         applyMove(move, aiStone)
       }
     }, 220)
 
     return () => window.clearTimeout(timer)
-  }, [aiStone, board, currentPlayer, gameOver, safeDepth])
+  }, [aiMaxDepth, aiStone, aiTimeBudget, applyMove, board, currentPlayer, gameOver])
 
   return (
     <main className="app-shell">
-      <GomokuBoard board={board} lastMove={lastMove} onPlay={handleHumanMove} disabled={boardDisabled} />
+      <GomokuBoard
+        board={board}
+        lastMove={lastMove}
+        winningLine={winningLine}
+        onPlay={handleHumanMove}
+        disabled={boardDisabled}
+      />
       <GamePanel
         currentPlayer={currentPlayer}
         humanStone={humanStone}
@@ -102,10 +147,30 @@ function App() {
         isDraw={isDraw}
         thinking={thinking}
         difficulty={difficulty}
+        aiThinkingInfo={aiThinkingInfo}
+        soundEnabled={soundEnabled}
         onDifficultyChange={setDifficulty}
+        onToggleSound={() => setSoundEnabled((prev) => !prev)}
         onRestart={resetGame}
         onUndo={handleUndo}
       />
+      {gameOver ? (
+        <section className="result-overlay" aria-live="polite">
+          <div className="result-card">
+            <h2>{isDraw ? '平局' : winner === humanStone ? '胜利' : '失败'}</h2>
+            <p>
+              {isDraw
+                ? '棋逢对手，继续挑战。'
+                : winner === humanStone
+                  ? '你完成了漂亮的终结。'
+                  : 'AI 抓住关键手完成终结。'}
+            </p>
+            <button type="button" onClick={resetGame}>
+              再来一局
+            </button>
+          </div>
+        </section>
+      ) : null}
     </main>
   )
 }

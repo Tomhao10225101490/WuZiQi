@@ -4,6 +4,7 @@ import { BOARD_SIZE, type Board, type Move, type Stone } from '../game/types'
 interface GomokuBoardProps {
   board: Board
   lastMove: Move | null
+  winningLine?: Move[] | null
   disabled?: boolean
   onPlay: (move: Move) => void
 }
@@ -15,6 +16,7 @@ const SIZE = PADDING * 2 + CELL * (BOARD_SIZE - 1)
 export function GomokuBoard({
   board,
   lastMove,
+  winningLine = null,
   disabled = false,
   onPlay,
 }: GomokuBoardProps) {
@@ -78,8 +80,8 @@ export function GomokuBoard({
       ctx.fill()
     }
 
-    drawStones(ctx, board, lastMove)
-  }, [board, stars, lastMove])
+    drawStones(ctx, board, lastMove, winningLine)
+  }, [board, stars, lastMove, winningLine])
 
   const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (disabled) return
@@ -122,7 +124,12 @@ function drawStone(ctx: CanvasRenderingContext2D, x: number, y: number, stone: S
   ctx.fill()
 }
 
-function drawStones(ctx: CanvasRenderingContext2D, board: Board, lastMove: Move | null) {
+function drawStones(
+  ctx: CanvasRenderingContext2D,
+  board: Board,
+  lastMove: Move | null,
+  winningLine: Move[] | null,
+) {
   for (let row = 0; row < BOARD_SIZE; row += 1) {
     for (let col = 0; col < BOARD_SIZE; col += 1) {
       if (board[row][col] === 0) continue
@@ -138,5 +145,27 @@ function drawStones(ctx: CanvasRenderingContext2D, board: Board, lastMove: Move 
     ctx.strokeStyle = '#ff4f4f'
     ctx.lineWidth = 2
     ctx.strokeRect(x - 7, y - 7, 14, 14)
+  }
+
+  if (winningLine && winningLine.length) {
+    ctx.strokeStyle = 'rgba(255, 56, 56, 0.95)'
+    ctx.lineWidth = 4
+    ctx.beginPath()
+    winningLine.forEach((move, index) => {
+      const x = PADDING + move.col * CELL
+      const y = PADDING + move.row * CELL
+      if (index === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    })
+    ctx.stroke()
+
+    ctx.fillStyle = 'rgba(255, 56, 56, 0.25)'
+    for (const move of winningLine) {
+      const x = PADDING + move.col * CELL
+      const y = PADDING + move.row * CELL
+      ctx.beginPath()
+      ctx.arc(x, y, 8.5, 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
 }

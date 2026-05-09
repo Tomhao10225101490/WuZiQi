@@ -8,6 +8,7 @@ describe('app', () => {
     expect(screen.getByText('五子棋 · 人机对战')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '悔棋' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '重新开始' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /音效：开启/ })).toBeInTheDocument()
   })
 
   it('allows changing difficulty slider', () => {

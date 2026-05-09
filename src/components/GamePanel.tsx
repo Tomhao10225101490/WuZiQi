@@ -8,7 +8,10 @@ interface GamePanelProps {
   isDraw: boolean
   thinking: boolean
   difficulty: number
+  aiThinkingInfo?: string
+  soundEnabled: boolean
   onDifficultyChange: (next: number) => void
+  onToggleSound: () => void
   onRestart: () => void
   onUndo: () => void
 }
@@ -21,7 +24,10 @@ export function GamePanel({
   isDraw,
   thinking,
   difficulty,
+  aiThinkingInfo,
+  soundEnabled,
   onDifficultyChange,
+  onToggleSound,
   onRestart,
   onUndo,
 }: GamePanelProps) {
@@ -60,6 +66,11 @@ export function GamePanel({
         value={difficulty}
         onChange={(event) => onDifficultyChange(Number(event.target.value))}
       />
+      {aiThinkingInfo ? <div className="ai-info">{aiThinkingInfo}</div> : null}
+
+      <button type="button" className="sound-toggle" onClick={onToggleSound}>
+        音效：{soundEnabled ? '开启' : '关闭'}
+      </button>
 
       <div className="actions">
         <button type="button" onClick={onUndo}>

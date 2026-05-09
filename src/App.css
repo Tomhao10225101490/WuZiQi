@@ -1,4 +1,5 @@
  .app-shell {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(280px, 360px);
   gap: 28px;
@@ -64,6 +65,20 @@
   font-size: 0.95rem;
 }
 
+.ai-info {
+  font-size: 0.86rem;
+  opacity: 0.85;
+}
+
+.sound-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
 .actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -83,6 +98,58 @@
 
 .actions button:hover {
   transform: translateY(-1px);
+}
+
+.result-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 12, 26, 0.58);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(3px);
+  z-index: 40;
+}
+
+.result-card {
+  width: min(92vw, 360px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(20, 40, 88, 0.95), rgba(14, 24, 52, 0.95));
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.35);
+  animation: popIn 0.36s ease;
+}
+
+.result-card h2 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.result-card p {
+  margin: 0 0 16px;
+  opacity: 0.92;
+}
+
+.result-card button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(120deg, #43a4ff, #7d83ff);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @media (max-width: 1080px) {
