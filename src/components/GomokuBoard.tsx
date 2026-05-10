@@ -9,9 +9,13 @@ interface GomokuBoardProps {
   onPlay: (move: Move) => void
 }
 
-// 标准赛制仍为 15x15，这里放大的是物理显示尺寸。
-const PADDING = 36
-const CELL = 44
+// 19×19 路与围棋盘一致；略缩小单格以便常见屏幕仍能完整显示整张盘。
+const PADDING = 30
+const CELL = 32
+const STONE_RADIUS = Math.round(CELL * 0.42)
+const LAST_MOVE_HALF = Math.round(CELL * 0.22)
+const WIN_DOT_R = Math.round(CELL * 0.27)
+const STAR_R = 2.8
 const SIZE = PADDING * 2 + CELL * (BOARD_SIZE - 1)
 
 export function GomokuBoard({
@@ -22,17 +26,18 @@ export function GomokuBoard({
   onPlay,
 }: GomokuBoardProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  // 围棋盘九星（0-based：第 4、10、16 路）
   const stars = useMemo(
     () => [
       [3, 3],
-      [3, 7],
-      [3, 11],
-      [7, 3],
-      [7, 7],
-      [7, 11],
-      [11, 3],
-      [11, 7],
-      [11, 11],
+      [3, 9],
+      [3, 15],
+      [9, 3],
+      [9, 9],
+      [9, 15],
+      [15, 3],
+      [15, 9],
+      [15, 15],
     ],
     [],
   )
@@ -77,7 +82,7 @@ export function GomokuBoard({
       const x = PADDING + col * CELL
       const y = PADDING + row * CELL
       ctx.beginPath()
-      ctx.arc(x, y, 3.2, 0, Math.PI * 2)
+      ctx.arc(x, y, STAR_R, 0, Math.PI * 2)
       ctx.fill()
     }
 
@@ -109,7 +114,7 @@ export function GomokuBoard({
 }
 
 function drawStone(ctx: CanvasRenderingContext2D, x: number, y: number, stone: Stone) {
-  const radius = 17
+  const radius = STONE_RADIUS
   const grad = ctx.createRadialGradient(x - 4, y - 4, 3, x, y, radius + 3)
   if (stone === 1) {
     grad.addColorStop(0, '#707070')
@@ -145,7 +150,7 @@ function drawStones(
     const y = PADDING + lastMove.row * CELL
     ctx.strokeStyle = '#ff4f4f'
     ctx.lineWidth = 2
-    ctx.strokeRect(x - 7, y - 7, 14, 14)
+    ctx.strokeRect(x - LAST_MOVE_HALF, y - LAST_MOVE_HALF, LAST_MOVE_HALF * 2, LAST_MOVE_HALF * 2)
   }
 
   if (winningLine && winningLine.length) {
@@ -165,7 +170,7 @@ function drawStones(
       const x = PADDING + move.col * CELL
       const y = PADDING + move.row * CELL
       ctx.beginPath()
-      ctx.arc(x, y, 8.5, 0, Math.PI * 2)
+      ctx.arc(x, y, WIN_DOT_R, 0, Math.PI * 2)
       ctx.fill()
     }
   }
